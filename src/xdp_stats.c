@@ -65,12 +65,12 @@ void stats_poll(int fd, char* mapname) {
 	}
 
 	for (;;) {
-		__u32 key = -1, next_key = -1;;
+		__u64 key = -1, next_key = -1;;
 		while (bpf_map_get_next_key(fd, &key, &next_key) == 0) {
 			int err;
 			err = bpf_map_lookup_elem(fd, &next_key, &rec);
 			if (err < 0) {
-				fprintf(stderr, "Map lookup failed on key(%d)\n", key);
+				fprintf(stderr, "Map lookup failed on key(%lld)\n", key);
 			}
 			else {
 				int i;
@@ -79,7 +79,7 @@ void stats_poll(int fd, char* mapname) {
 					sum.packets += rec[i].packets;
 					sum.bytes += rec[i].bytes;
 				}
-				fprintf(stdout, "%x: %lld packets %lld bytes\n", next_key, sum.packets, sum.bytes);
+				fprintf(stdout, "%08llx -> %08llx: %lld packets %lld bytes\n", next_key>>32, next_key&0xffffffff, sum.packets, sum.bytes);
 				
 			}
 			key = next_key;
@@ -91,7 +91,7 @@ void stats_poll(int fd, char* mapname) {
 
 int main(int argc, char** argv) {
 	const struct bpf_map_info map_expect = {
-		.key_size    = sizeof(__u32),
+		.key_size    = sizeof(__u64),
 		.value_size  = sizeof(struct datarec),
 		.max_entries = MAX_STATS_ENTRIES,
 	};

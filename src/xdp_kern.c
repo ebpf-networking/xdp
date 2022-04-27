@@ -11,7 +11,7 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 struct {
 	__uint(type, BPF_MAP_TYPE_PERCPU_HASH);
 	__uint(max_entries, MAX_STATS_ENTRIES);
-	__type(key, __u32);			// ip
+	__type(key, __u64);			// src:ip+dst:ip
 	__type(value, struct datarec);		// counters
         __uint(pinning, LIBBPF_PIN_BY_NAME);
 } xdp_stats_map SEC(".maps") ;
@@ -31,31 +31,31 @@ static __always_inline int parse_ethhdr(void **data,
 
 static __always_inline int parse_iphdr(void **data,
 					void *data_end,
-					__u32 *saddr) {
+					__u64 *addr) {
 	struct iphdr *ip = *data;
 	if (ip + 1 > data_end)
 		return -1;
 
-	*saddr = ip->saddr;
+	*addr = ((long long)ip->saddr<<32)+ip->daddr;
 	*data = ip + 1;
 	return 0;
 }
 
 static __always_inline void xdp_stats_record(struct xdp_md *ctx,
-						__u32 saddr) {
-	struct datarec *datarec = bpf_map_lookup_elem(&xdp_stats_map, &saddr);
+						__u64 addr) {
+	struct datarec *datarec = bpf_map_lookup_elem(&xdp_stats_map, &addr);
 	if (!datarec) {
 		struct datarec d;
 		d.packets = 1;
 		d.bytes = (ctx->data_end - ctx->data);
-		bpf_map_update_elem(&xdp_stats_map, &saddr, &d, 0);
-		bpf_printk("%x: packets: %llu bytes: %llu", saddr, d.packets, d.bytes);
+		bpf_map_update_elem(&xdp_stats_map, &addr, &d, 0);
+		//bpf_printk("%llx: packets: %llu bytes: %llu", addr, d.packets, d.bytes);
 		return;
 	}
 	
 	datarec->packets++;
 	datarec->bytes += (ctx->data_end - ctx->data);
-	bpf_printk("%x: packets: %llu bytes: %llu", saddr, datarec->packets, datarec->bytes);
+	//bpf_printk("%llx: packets: %llu bytes: %llu", addr, datarec->packets, datarec->bytes);
 	return;
 }
 
@@ -65,7 +65,7 @@ int xdp_stats_prog(struct xdp_md *ctx)
 	void *data = (void *)(long)ctx->data;
 	void *data_end = (void *)(long)ctx->data_end;
 	__be16 header_type;
-	__u32 saddr;
+	__u64 addr;
 
 	__u32 action = XDP_PASS;
 
@@ -73,11 +73,11 @@ int xdp_stats_prog(struct xdp_md *ctx)
 	if (header_type != bpf_htons(ETH_P_IP))
 		goto out;
 
-	header_type = parse_iphdr(&data, data_end, &saddr);
+	header_type = parse_iphdr(&data, data_end, &addr);
 	if (header_type < 0)
 		goto out;
 
-	xdp_stats_record(ctx, saddr);
+	xdp_stats_record(ctx, addr);
 out:
 	return action;
 }
