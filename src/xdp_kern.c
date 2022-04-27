@@ -4,22 +4,20 @@
 #include <linux/ip.h>
 #include <bpf/bpf_helpers.h>
 
-#define MAX_STATS_ENTRIES 256
+#include "xdp_common.h"
 
-struct datarec {
-	__u64	packets;
-	__u64	bytes;
-};
+char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
-struct bpf_map_def SEC("maps") xdp_stats_map = {
-        .type        = BPF_MAP_TYPE_PERCPU_HASH,
-        .key_size    = sizeof(__u32),			// ip
-        .value_size  = sizeof(struct datarec),		// counters
-        .max_entries = MAX_STATS_ENTRIES,
-};
+struct {
+	__uint(type, BPF_MAP_TYPE_PERCPU_HASH);
+	__uint(max_entries, MAX_STATS_ENTRIES);
+	__type(key, __u32);			// ip
+	__type(value, struct datarec);		// counters
+        __uint(pinning, LIBBPF_PIN_BY_NAME);
+} xdp_stats_map SEC(".maps") ;
 
 static __always_inline int parse_ethhdr(void **data,
-                                        void *data_end) {
+					void *data_end) {
 	struct ethhdr *eth = *data;
 	__be16 header_type;
 
@@ -32,8 +30,8 @@ static __always_inline int parse_ethhdr(void **data,
 }
 
 static __always_inline int parse_iphdr(void **data,
-                                        void *data_end,
-                                        __u32 *saddr) {
+					void *data_end,
+					__u32 *saddr) {
 	struct iphdr *ip = *data;
 	if (ip + 1 > data_end)
 		return -1;
@@ -51,13 +49,13 @@ static __always_inline void xdp_stats_record(struct xdp_md *ctx,
 		d.packets = 1;
 		d.bytes = (ctx->data_end - ctx->data);
 		bpf_map_update_elem(&xdp_stats_map, &saddr, &d, 0);
-		//bpf_printk("%x: packets: %llu bytes: %llu", saddr, d.packets, d.bytes);
+		bpf_printk("%x: packets: %llu bytes: %llu", saddr, d.packets, d.bytes);
 		return;
 	}
 	
 	datarec->packets++;
 	datarec->bytes += (ctx->data_end - ctx->data);
-	//bpf_printk("%x: packets: %llu bytes: %llu", saddr, datarec->packets, datarec->bytes);
+	bpf_printk("%x: packets: %llu bytes: %llu", saddr, datarec->packets, datarec->bytes);
 	return;
 }
 
