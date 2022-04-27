@@ -2,6 +2,7 @@
 
 #include <bpf/bpf.h>
 #include <net/if.h>
+#include <arpa/inet.h>
 
 #include "xdp_common.h"
 
@@ -66,6 +67,7 @@ void stats_poll(int fd, char* mapname) {
 
 	for (;;) {
 		__u64 key = -1, next_key = -1;;
+		system("clear");	
 		while (bpf_map_get_next_key(fd, &key, &next_key) == 0) {
 			int err;
 			err = bpf_map_lookup_elem(fd, &next_key, &rec);
@@ -79,12 +81,21 @@ void stats_poll(int fd, char* mapname) {
 					sum.packets += rec[i].packets;
 					sum.bytes += rec[i].bytes;
 				}
-				fprintf(stdout, "%08llx -> %08llx: %lld packets %lld bytes\n", next_key>>32, next_key&0xffffffff, sum.packets, sum.bytes);
+				struct in_addr saddr = {.s_addr = next_key>>32};
+				struct in_addr daddr = {.s_addr = next_key&0xffffffff};
+				char *p, saddr_str[100], daddr_str[100];
+				p = inet_ntoa(saddr);
+				if (p) strncpy(saddr_str, p, 100);
+				else break;
+				p = inet_ntoa(daddr);
+				if (p) strncpy(daddr_str, p, 100);
+				else break;
+				fprintf(stdout, "[%15s -> %15s]: %lld packets %lld bytes\n", saddr_str, daddr_str, sum.packets, sum.bytes);
 				
 			}
 			key = next_key;
-			sleep(1);
 		}
+		sleep(1);
 	}
 }
 

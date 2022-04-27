@@ -36,7 +36,7 @@ static __always_inline int parse_iphdr(void **data,
 	if (ip + 1 > data_end)
 		return -1;
 
-	*addr = ((long long)ip->saddr<<32)+ip->daddr;
+	*addr = ((__u64)ip->saddr<<32)+ip->daddr;
 	*data = ip + 1;
 	return 0;
 }
