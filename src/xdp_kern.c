@@ -13,7 +13,7 @@ struct {
 	__uint(max_entries, MAX_STATS_ENTRIES);
 	__type(key, __u64);			// src:ip+dst:ip
 	__type(value, struct datarec);		// counters
-        __uint(pinning, LIBBPF_PIN_BY_NAME);
+    __uint(pinning, LIBBPF_PIN_BY_NAME);
 } xdp_stats_map SEC(".maps") ;
 
 static __always_inline int parse_ethhdr(void **data,
