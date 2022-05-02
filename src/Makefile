@@ -1,3 +1,5 @@
+# Builds an XDP program with dependent libraries and tools
+
 LLC ?= llc
 LLVM_STRIP ?= llvm-strip
 CLANG ?= clang
@@ -5,27 +7,35 @@ CC ?= gcc
 
 ARCH := $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/' | sed 's/ppc64le/powerpc/' | sed 's/mips.*/mips/')
 
+OUTPUT ?= $(CURDIR)/.output
 LIBBPF_SRC ?= $(abspath ../libbpf/src)
-LIBBPF_OBJECT = $(abspath $(OUTPUT_DIR)/libbpf.a)
+LIBBPF_OBJECT = $(abspath $(OUTPUT)/libbpf.a)
+BPFTOOL_SRC := $(abspath ../bpftool/src)
+BPFTOOL ?= $(abspath $(OUTPUT)/bpftool/bpftool)
 
-OUTPUT_DIR ?= $(CURDIR)/.output
-
-CFLAGS ?= -I$(OUTPUT_DIR)
-LDFLAGS ?= -L$(OUTPUT_DIR)
+CFLAGS ?= -I$(OUTPUT)
+LDFLAGS ?= -L$(OUTPUT)
 
 LIBS = -l:libbpf.a -lelf -lz
 
-all: $(OUTPUT_DIR)/xdp_kern.o $(OUTPUT_DIR)/xdp_stats
+# Build targets:
+# xdp_kern.o: XDP program
+# xdp_stats: Control program in the user land
+# $(BPFTOOL): Use to debug XDP programs
+all: $(OUTPUT)/xdp_kern.o $(OUTPUT)/xdp_stats $(BPFTOOL)
 
-$(OUTPUT_DIR) $(OUTPUT)/libbpf:
+$(OUTPUT) $(OUTPUT)/libbpf $(dir $(BPFTOOL)):
 	mkdir -p $@
+
+$(BPFTOOL): | $(dir $(BPFTOOL))
+	$(MAKE) OUTPUT=$(dir $(BPFTOOL)) -C $(BPFTOOL_SRC)
 
 $(LIBBPF_OBJECT): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPUT)/libbpf
 	$(MAKE) -C $(LIBBPF_SRC) BUILD_STATIC_ONLY=1 \
 	OBJDIR=$(dir $@)/libbpf DESTDIR=$(dir $@) \
 	INCLUDEDIR= LIBDIR= UAPIDIR= install
 
-$(OUTPUT_DIR)/xdp_kern.o: xdp_kern.c $(LIBBPF_OBJECT) | $(OUTPUT_DIR)
+$(OUTPUT)/xdp_kern.o: xdp_kern.c $(LIBBPF_OBJECT) | $(OUTPUT)
 	$(CLANG) \
 	    -g -O2 \
 	    -target bpf \
@@ -39,8 +49,8 @@ $(OUTPUT_DIR)/xdp_kern.o: xdp_kern.c $(LIBBPF_OBJECT) | $(OUTPUT_DIR)
 	    -c $< -o $@
 	$(LLVM_STRIP) -g $@
 
-$(OUTPUT_DIR)/xdp_stats: xdp_stats.c $(LIBBPF_OBJECT) | $(OUTPUT_DIR)
+$(OUTPUT)/xdp_stats: xdp_stats.c $(LIBBPF_OBJECT) | $(OUTPUT)
 	$(CC) -Wall -g -O2 $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
 
 clean:
-	rm -rf $(OUTPUT_DIR)
+	rm -rf $(OUTPUT)
