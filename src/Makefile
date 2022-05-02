@@ -1,41 +1,46 @@
 LLC ?= llc
+LLVM_STRIP ?= llvm-strip
 CLANG ?= clang
 CC ?= gcc
 
-LIBBPF_DIR ?= $(CURDIR)/../libbpf/src
-OBJECT_LIBBPF = $(LIBBPF_DIR)/libbpf.a
+ARCH := $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/' | sed 's/ppc64le/powerpc/' | sed 's/mips.*/mips/')
+
+LIBBPF_SRC ?= $(abspath ../libbpf/src)
+LIBBPF_OBJECT = $(abspath $(OUTPUT_DIR)/libbpf.a)
 
 OUTPUT_DIR ?= $(CURDIR)/.output
 
-CFLAGS ?= -I$(LIBBPF_DIR)/root/usr/include/ -g
-LDFLAGS ?= -L$(LIBBPF_DIR)/root/usr/lib64
+CFLAGS ?= -I$(OUTPUT_DIR)
+LDFLAGS ?= -L$(OUTPUT_DIR)
 
 LIBS = -l:libbpf.a -lelf -lz
 
 all: $(OUTPUT_DIR)/xdp_kern.o $(OUTPUT_DIR)/xdp_stats
 
-$(OUTPUT_DIR):
+$(OUTPUT_DIR) $(OUTPUT)/libbpf:
 	mkdir -p $@
 
-$(OBJECT_LIBBPF):
-	cd $(LIBBPF_DIR) && mkdir -p build root; \
-	BUILD_STATIC_ONLY=y OBJDIR=build DESTDIR=root make install;
+$(LIBBPF_OBJECT): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPUT)/libbpf
+	$(MAKE) -C $(LIBBPF_SRC) BUILD_STATIC_ONLY=1 \
+	OBJDIR=$(dir $@)/libbpf DESTDIR=$(dir $@) \
+	INCLUDEDIR= LIBDIR= UAPIDIR= install
 
-$(OUTPUT_DIR)/xdp_kern.o: xdp_kern.c $(OBJECT_LIBBPF) | $(OUTPUT_DIR)
-	$(CLANG) -S \
+$(OUTPUT_DIR)/xdp_kern.o: xdp_kern.c $(LIBBPF_OBJECT) | $(OUTPUT_DIR)
+	$(CLANG) \
+	    -g -O2 \
 	    -target bpf \
-	    -D __BPF_TRACING__ \
+	    -D__TARGET_ARCH_$(ARCH) \
 	    $(CFLAGS) \
 	    -Wall \
 	    -Wno-unused-value \
 	    -Wno-pointer-sign \
 	    -Wno-compare-distinct-pointer-types \
 	    -Werror \
-	    -O2 -emit-llvm -c -g -o ${@:.o=.ll} $<
-	$(LLC) -march=bpf -filetype=obj -o $@ ${@:.o=.ll}
+	    -c $< -o $@
+	$(LLVM_STRIP) -g $@
 
-$(OUTPUT_DIR)/xdp_stats: xdp_stats.c $(OBJECT_LIBBPF) | $(OUTPUT_DIR)
-	$(CC) -Wall $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
+$(OUTPUT_DIR)/xdp_stats: xdp_stats.c $(LIBBPF_OBJECT) | $(OUTPUT_DIR)
+	$(CC) -Wall -g -O2 $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
 
 clean:
 	rm -rf $(OUTPUT_DIR)

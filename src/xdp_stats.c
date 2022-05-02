@@ -83,12 +83,12 @@ void stats_poll(int fd, char* mapname) {
 				}
 				struct in_addr saddr = {.s_addr = next_key>>32};
 				struct in_addr daddr = {.s_addr = next_key&0xffffffff};
-				char *p, saddr_str[100], daddr_str[100];
+				char *p, saddr_str[16], daddr_str[16];
 				p = inet_ntoa(saddr);
-				if (p) strncpy(saddr_str, p, 100);
+				if (p) strncpy(saddr_str, p, 15);
 				else break;
 				p = inet_ntoa(daddr);
-				if (p) strncpy(daddr_str, p, 100);
+				if (p) strncpy(daddr_str, p, 15);
 				else break;
 				fprintf(stdout, "[%15s -> %15s]: %lld packets %lld bytes\n", saddr_str, daddr_str, sum.packets, sum.bytes);
 				
