@@ -13,3 +13,11 @@ These are in the order of most performant to least performant, where the "genera
 ## Objectives
 
 This project is used to explore the capabilities of XDP and its performance characteristics so we have practical experiences with this technology. 
+
+## Build
+
+```
+docker build -t haih/xdp .
+```
+
+The compiled binaries are located in haih/xdp:/tmp/xdp/src/.output directory.
