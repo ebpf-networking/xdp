@@ -22,7 +22,7 @@ $(OBJECT_LIBBPF):
 	cd $(LIBBPF_DIR) && mkdir -p build root; \
 	BUILD_STATIC_ONLY=y OBJDIR=build DESTDIR=root make install;
 
-$(OUTPUT_DIR)/xdp_kern.o: xdp_kern.c | $(OUTPUT_DIR)
+$(OUTPUT_DIR)/xdp_kern.o: xdp_kern.c $(OBJECT_LIBBPF) | $(OUTPUT_DIR)
 	$(CLANG) -S \
 	    -target bpf \
 	    -D __BPF_TRACING__ \
