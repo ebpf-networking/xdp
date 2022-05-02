@@ -2,14 +2,13 @@ LLC ?= llc
 CLANG ?= clang
 CC ?= gcc
 
-LIBBPF_DIR ?= ../libbpf/src
+LIBBPF_DIR ?= $(CURDIR)/../libbpf/src
 OBJECT_LIBBPF = $(LIBBPF_DIR)/libbpf.a
 
-OUTPUT_DIR ?= .output
+OUTPUT_DIR ?= $(CURDIR)/.output
 
 CFLAGS ?= -I$(LIBBPF_DIR)/root/usr/include/ -g
 LDFLAGS ?= -L$(LIBBPF_DIR)/root/usr/lib64
-BPF_CFLAGS ?= -I$(LIBBPF_DIR)/root/usr/include/
 
 LIBS = -l:libbpf.a -lelf -lz
 
@@ -26,7 +25,7 @@ $(OUTPUT_DIR)/xdp_kern.o: xdp_kern.c $(OBJECT_LIBBPF) | $(OUTPUT_DIR)
 	$(CLANG) -S \
 	    -target bpf \
 	    -D __BPF_TRACING__ \
-	    $(BPF_CFLAGS) \
+	    $(CFLAGS) \
 	    -Wall \
 	    -Wno-unused-value \
 	    -Wno-pointer-sign \
