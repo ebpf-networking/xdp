@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# This script creates 3 netns. For each netns, it creates a veth pair.
+# The end of each veth pair is connected to a Linux bridge.
+
 # create netns
 ip netns add ns1
 ip netns add ns2
@@ -30,6 +33,10 @@ ip link set veth-ns1 master br0
 ip link set veth-ns2 master br0
 ip link set veth-ns3 master br0
 ip link set br0 up
+
+xdp-loader load -p /sys/fs/bpf/veth-ns1 -s xdp_stats veth-ns1 .output/xdp_kern.o
+xdp-loader load -p /sys/fs/bpf/veth-ns2 -s xdp_stats veth-ns2 .output/xdp_kern.o
+xdp-loader load -p /sys/fs/bpf/veth-ns3 -s xdp_stats veth-ns3 .output/xdp_kern.o
 
 # test connectivity
 nsenter --net=/var/run/netns/ns2 ping -c 1 192.168.100.1
