@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 # This script creates 3 netns. For each netns, it creates a veth pair.
 # The end of each veth pair is connected to a Linux bridge.
 
