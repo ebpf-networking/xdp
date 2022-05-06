@@ -26,7 +26,7 @@ LIBS = -l:libbpf.a -lelf -lz
 # $(BPFTOOL): Use to debug XDP programs
 all: $(OUTPUT)/xdp_kern.o $(OUTPUT)/xdp_stats $(BPFTOOL) $(XDPLOADER)
 
-$(OUTPUT) $(OUTPUT)/libbpf $(dir $(BPFTOOL)) ($dir $(XDPLOADER)):
+$(OUTPUT) $(OUTPUT)/libbpf $(dir $(BPFTOOL)) $(dir $(XDPLOADER)):
 	mkdir -p $@
 
 $(BPFTOOL): $(wildcard $(BPFTOOL_SRC)/*.[ch] $(BPFTOOL_SRC)/Makefile) | $(dir $(BPFTOOL))
