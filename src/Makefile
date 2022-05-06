@@ -32,7 +32,7 @@ $(OUTPUT) $(OUTPUT)/libbpf $(dir $(BPFTOOL)) ($dir $(XDPLOADER)):
 $(BPFTOOL): $(wildcard $(BPFTOOL_SRC)/*.[ch] $(BPFTOOL_SRC)/Makefile) | $(dir $(BPFTOOL))
 	$(MAKE) OUTPUT=$(dir $(BPFTOOL)) -C $(BPFTOOL_SRC)
 
-$(XDPLOADER): $(wildcard $(XDPLOADER_SRC)/*.[ch] $(XDPLOADER_SRC)/Makefile) | $(DIR $(xdploader))
+$(XDPLOADER): $(wildcard $(XDPLOADER_SRC)/*.[ch] $(XDPLOADER_SRC)/Makefile) | $(dir $(xdploader))
 	$(MAKE) -C $(XDPLOADER_SRC)
 	mv $(XDPLOADER_SRC)/xdp-loader $@
 
