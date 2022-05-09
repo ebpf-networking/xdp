@@ -39,6 +39,7 @@ ip link set veth-ns2 master br0
 ip link set veth-ns3 master br0
 ip link set br0 up
 
+# note: add '-vv' if xdp-loader fails due to verifier to get more debugging hints
 xdp-loader load -p /sys/fs/bpf/veth-ns1 -s xdp_stats veth-ns1 .output/xdp_kern.o
 xdp-loader load -p /sys/fs/bpf/veth-ns2 -s xdp_stats veth-ns2 .output/xdp_kern.o
 xdp-loader load -p /sys/fs/bpf/veth-ns3 -s xdp_stats veth-ns3 .output/xdp_kern.o
