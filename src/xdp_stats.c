@@ -60,18 +60,18 @@ void print_stats(char *ifname) {
             }
             struct in_addr saddr = {.s_addr = rec[0].src.ipv4_addr};
             struct in_addr daddr = {.s_addr = rec[0].dst.ipv4_addr};
-            char *p, saddr_str[16], daddr_str[16];
+            char *p, saddr_str[INET_ADDRSTRLEN], daddr_str[INET_ADDRSTRLEN];
             p = inet_ntoa(saddr);
             if (p)
-                strncpy(saddr_str, p, 15);
+                strncpy(saddr_str, p, INET_ADDRSTRLEN-1);
             else
                 return;
             p = inet_ntoa(daddr);
             if (p)
-                strncpy(daddr_str, p, 15);
+                strncpy(daddr_str, p, INET_ADDRSTRLEN-1);
             else
                 return;
-            fprintf(stdout, "\t[%15s -> %15s]: %lld packets %lld bytes\n", saddr_str, daddr_str, sum.metrics.packets, sum.metrics.bytes);
+            fprintf(stdout, "\t[%16s -> %16s]: %lld packets %lld bytes\n", saddr_str, daddr_str, sum.metrics.packets, sum.metrics.bytes);
         }
         key = next_key;
     }
@@ -103,18 +103,18 @@ void print_stats(char *ifname) {
             struct in6_addr saddr, daddr;
             memcpy(saddr.s6_addr, &rec[0].src.ipv6_addr, sizeof(struct in6_addr));
             memcpy(daddr.s6_addr, &rec[0].dst.ipv6_addr, sizeof(struct in6_addr));
-            char *p, saddr_str[40], daddr_str[40];
-            p = (char*)inet_ntop(AF_INET6, &saddr, saddr_str, 40);
+            char *p, saddr_str[INET6_ADDRSTRLEN], daddr_str[INET6_ADDRSTRLEN];
+            p = (char*)inet_ntop(AF_INET6, &saddr, saddr_str, INET6_ADDRSTRLEN);
             if (p)
-                strncpy(saddr_str, p, 39);
+                strncpy(saddr_str, p, INET6_ADDRSTRLEN-1);
             else
                 return;
-            p = (char*)inet_ntop(AF_INET6, &daddr, daddr_str, 40);
+            p = (char*)inet_ntop(AF_INET6, &daddr, daddr_str, INET6_ADDRSTRLEN);
             if (p)
-                strncpy(daddr_str, p, 39);
+                strncpy(daddr_str, p, INET6_ADDRSTRLEN-1);
             else
                 return;
-            fprintf(stdout, "\t[%39s -> %39s]: %lld packets %lld bytes\n", saddr_str, daddr_str, sum.metrics.packets, sum.metrics.bytes);
+            fprintf(stdout, "\t[%40s -> %40s]: %lld packets %lld bytes\n", saddr_str, daddr_str, sum.metrics.packets, sum.metrics.bytes);
         }
         memcpy(&key_v6, &next_key_v6, sizeof(struct in6_addr));
     }
