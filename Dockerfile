@@ -7,7 +7,8 @@ RUN dnf -y update && \
 COPY ./ /tmp/xdp
 RUN make -C /tmp/xdp/src
 
-FROM alpine:latest
+FROM frolvlad/alpine-glibc:latest
+RUN apk add libelf
 RUN mkdir -p /root/bin
 COPY --from=builder /tmp/xdp/src/.output/xdp_kern.o /root/bin/
 COPY --from=builder /tmp/xdp/src/.output/xdp_stats /root/bin/
