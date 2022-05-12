@@ -20,4 +20,4 @@ This project is used to explore the capabilities of XDP and its performance char
 docker build -t haih/xdp .
 ```
 
-The compiled binaries are located in haih/xdp:/tmp/xdp/src/.output directory.
+The compiled binaries are located in haih/xdp:/root/bin/ directory.
