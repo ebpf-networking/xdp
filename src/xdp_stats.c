@@ -29,6 +29,15 @@ int open_bpf_map_file(const char *mapname, struct bpf_map_info *info) {
     return fd;
 }
 
+bool ipv6_is_empty(struct in6_addr *ip) {
+    int i;
+    for (i = 0; i < 16; i++) {
+        if (ip->s6_addr[i] != 0)
+            return false;
+    }
+    return true;
+}
+
 void print_stats(char *ifname) {
     char mapname[PATH_MAX];
     int fd, len, err;
@@ -53,13 +62,21 @@ void print_stats(char *ifname) {
         err = bpf_map_lookup_elem(fd, &next_key, &rec);
         if (err == 0) {
             int i;
-            struct datarec sum = {0};;
+            struct datarec sum = {0};
+            struct in_addr saddr = { 0 };
+            struct in_addr daddr = { 0 };
+            bool found_ip = false;
             for (i = 0; i < nr_cpus; i++) {
                 sum.metrics.packets += rec[i].metrics.packets;
                 sum.metrics.bytes += rec[i].metrics.bytes;
+                if (!found_ip) {
+                    if (rec[i].src.ipv4_addr != 0) {
+                        saddr.s_addr = rec[i].src.ipv4_addr;
+                        daddr.s_addr = rec[i].dst.ipv4_addr;
+                        found_ip = true;
+                    }
+                }
             }
-            struct in_addr saddr = {.s_addr = rec[0].src.ipv4_addr};
-            struct in_addr daddr = {.s_addr = rec[0].dst.ipv4_addr};
             char *p, saddr_str[INET_ADDRSTRLEN], daddr_str[INET_ADDRSTRLEN];
             p = inet_ntoa(saddr);
             if (p)
@@ -95,14 +112,21 @@ void print_stats(char *ifname) {
         err = bpf_map_lookup_elem(fd, &next_key_v6, &rec);
         if (err == 0) {
             int i;
-            struct datarec sum = {0};;
+            struct datarec sum = { 0 };
+            struct in6_addr saddr = { 0 };
+            struct in6_addr daddr = { 0 };
+            bool found_ip = false;
             for (i = 0; i < nr_cpus; i++) {
                 sum.metrics.packets += rec[i].metrics.packets;
                 sum.metrics.bytes += rec[i].metrics.bytes;
+                if (!found_ip) {
+                    if (!ipv6_is_empty(&rec[i].src.ipv6_addr)) {
+                        memcpy(saddr.s6_addr, &rec[0].src.ipv6_addr, sizeof(struct in6_addr));
+                        memcpy(daddr.s6_addr, &rec[0].dst.ipv6_addr, sizeof(struct in6_addr));
+                        found_ip = true;
+                    }
+                }
             }
-            struct in6_addr saddr, daddr;
-            memcpy(saddr.s6_addr, &rec[0].src.ipv6_addr, sizeof(struct in6_addr));
-            memcpy(daddr.s6_addr, &rec[0].dst.ipv6_addr, sizeof(struct in6_addr));
             char *p, saddr_str[INET6_ADDRSTRLEN], daddr_str[INET6_ADDRSTRLEN];
             p = (char*)inet_ntop(AF_INET6, &saddr, saddr_str, INET6_ADDRSTRLEN);
             if (p)
