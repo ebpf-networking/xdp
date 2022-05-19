@@ -1,8 +1,9 @@
 # Need at least glibc, libelf, libz installed to run xdp-loader, bpftool, and other binaries
 
-FROM fedora:35 AS builder
+# Use a slightly older version of fedora so it's linked to an older version of glibc (v2.29)
+FROM fedora:32 AS builder
 RUN dnf -y update && \
-    dnf install -y clang llvm gcc elfutils-libelf-devel glibc-devel.i686 m4 libpcap-devel && \
+    dnf install -y clang llvm gcc elfutils-libelf-devel glibc-devel.i686 m4 libpcap-devel make && \
     dnf install -y findutils vim git
 COPY ./ /tmp/xdp
 RUN make -C /tmp/xdp/src
