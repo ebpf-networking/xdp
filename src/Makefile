@@ -24,7 +24,7 @@ LIBS = -l:libbpf.a -lelf -lz
 # xdp_kern.o: XDP program
 # xdp_stats: Control program in the user land
 # $(BPFTOOL): Use to debug XDP programs
-all: $(OUTPUT)/xdp_kern.o $(OUTPUT)/xdp_stats $(BPFTOOL) $(XDPLOADER)
+all: $(OUTPUT)/xdp_kern.o $(OUTPUT)/xdp_stats $(OUTPUT)/tc_kern.o $(BPFTOOL) $(XDPLOADER)
 
 $(OUTPUT) $(OUTPUT)/libbpf $(dir $(BPFTOOL)) $(dir $(XDPLOADER)):
 	mkdir -p $@
@@ -57,6 +57,20 @@ $(OUTPUT)/xdp_kern.o: xdp_kern.c $(LIBBPF_OBJECT) | $(OUTPUT)
 
 $(OUTPUT)/xdp_stats: xdp_stats.c $(LIBBPF_OBJECT) | $(OUTPUT)
 	$(CC) -Wall -g -O2 $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
+
+$(OUTPUT)/tc_kern.o: tc_kern.c $(LIBBPF_OBJECT) | $(OUTPUT)
+	$(CLANG) \
+	    -g -O2 \
+	    -target bpf \
+	    -D__TARGET_ARCH_$(ARCH) \
+	    $(CFLAGS) \
+	    -Wall \
+	    -Wno-unused-value \
+	    -Wno-pointer-sign \
+	    -Wno-compare-distinct-pointer-types \
+	    -Werror \
+	    -c $< -o $@
+	$(LLVM_STRIP) -g $@
 
 clean:
 	rm -rf $(OUTPUT)
