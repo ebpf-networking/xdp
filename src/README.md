@@ -1,7 +1,8 @@
 # Build
 
 ```
-make
+git clone --recurse-submodules git@github.com:ykt-networking/xdp.git
+cd xdp && make
 ```
 
 # Setup
