@@ -17,7 +17,7 @@ XDPLOADER ?= $(abspath $(OUTPUT)/xdp-tools/xdp-loader)
 IPROUTE2_SRC := $(abspath ../iproute2)
 IPROUTE2_TC ?= $(abspath $(OUTPUT)/iproute2/tc)
 
-CFLAGS ?= -I$(OUTPUT)
+CFLAGS ?= -I$(OUTPUT) -I$(IPROUTE2_SRC)/include
 LDFLAGS ?= -L$(OUTPUT)
 
 LIBS = -l:libbpf.a -lelf -lz

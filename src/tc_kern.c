@@ -1,14 +1,14 @@
 #include <linux/bpf.h>
 #include <linux/pkt_cls.h>
 #include <bpf/bpf_helpers.h>
-
-#include "xdp_common.h"
+#include <bpf_elf.h>
 
 #ifndef lock_xadd
 # define lock_xadd(ptr, val)              \
         ((void)__sync_fetch_and_add(ptr, val))
 #endif
 
+/*
 #define PIN_GLOBAL_NS		2
 struct bpf_elf_map {
 	__u32 type;
@@ -19,10 +19,10 @@ struct bpf_elf_map {
 	__u32 id;
 	__u32 pinning;
 };
+*/
 
 #define TC_INGRESS_MAP_INDEX    0
 #define TC_EGRESS_MAP_INDEX     1
-
 
 // this map is found at:
 // bpftool map dump pinned /sys/fs/bpf/tc/globals/tc_stats_map
