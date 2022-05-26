@@ -43,10 +43,12 @@ $(LIBBPF_OBJECT): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OU
 	OBJDIR=$(dir $@)/libbpf DESTDIR=$(dir $@) \
 	INCLUDEDIR= LIBDIR= UAPIDIR= install
 
-$(IPROUTE2_TC): $(wildcard $(IPROUTE2_SRC/*[ch]) (LIBBPF_SRC)/Makefile) | $(dir $(IPROUTE2_TC))
-	cd $(IPROUTE2_SRC)
-	git apply ../misc/iproute2.diff
-	./configure
+$(IPROUTE2_TC): $(wildcard $(IPROUTE2_SRC/*/*[ch]) (LIBBPF_SRC)/Makefile) | $(dir $(IPROUTE2_TC))
+	cd $(IPROUTE2_SRC) && \
+	git apply ../misc/iproute2.diff && \
+	pwd && \
+	ls -al && \
+	./configure && \
 	make
 	mv $(IPROUTE2_SRC)/tc/tc $@
 

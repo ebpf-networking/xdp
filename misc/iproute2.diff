@@ -7,7 +7,7 @@ index 0f14c609..504cc138 100644
  
  ip: $(IPOBJ) $(LIBNETLINK)
 -	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
-+	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@  -l:libbpf.a -L/root/xdp/src/.output/libbpf -lz
++	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@  -l:libbpf.a -L/tmp/xdp/src/.output/libbpf -lz
  
  rtmon: $(RTMONOBJ)
  	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
@@ -20,7 +20,7 @@ index 5a517af2..bc2065af 100644
  
  tc: $(TCOBJ) $(LIBNETLINK) libtc.a
 -	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
-+	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@  -l:libbpf.a -L/root/xdp/src/.output/libbpf -lz -lelf
++	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@  -l:libbpf.a -L/tmp/xdp/src/.output/libbpf -lz -lelf
  
  libtc.a: $(TCLIB)
  	$(QUIET_AR)$(AR) rcs $@ $^
