@@ -1,0 +1,26 @@
+diff --git a/ip/Makefile b/ip/Makefile
+index 0f14c609..504cc138 100644
+--- a/ip/Makefile
++++ b/ip/Makefile
+@@ -25,7 +25,7 @@ TARGETS=ip rtmon
+ all: $(TARGETS) $(SCRIPTS)
+ 
+ ip: $(IPOBJ) $(LIBNETLINK)
+-	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
++	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@  -l:libbpf.a -L/root/xdp/src/.output/libbpf -lz
+ 
+ rtmon: $(RTMONOBJ)
+ 	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
+diff --git a/tc/Makefile b/tc/Makefile
+index 5a517af2..bc2065af 100644
+--- a/tc/Makefile
++++ b/tc/Makefile
+@@ -141,7 +141,7 @@ MODDESTDIR := $(DESTDIR)$(LIBDIR)/tc
+ all: tc $(TCSO)
+ 
+ tc: $(TCOBJ) $(LIBNETLINK) libtc.a
+-	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
++	$(QUIET_LINK)$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@  -l:libbpf.a -L/root/xdp/src/.output/libbpf -lz -lelf
+ 
+ libtc.a: $(TCLIB)
+ 	$(QUIET_AR)$(AR) rcs $@ $^

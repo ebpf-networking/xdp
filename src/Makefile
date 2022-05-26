@@ -9,11 +9,13 @@ ARCH := $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/' | sed 's
 
 OUTPUT ?= $(CURDIR)/.output
 LIBBPF_SRC ?= $(abspath ../libbpf/src)
-LIBBPF_OBJECT = $(abspath $(OUTPUT)/libbpf.a)
+LIBBPF_OBJECT ?= $(abspath $(OUTPUT)/libbpf.a)
 BPFTOOL_SRC := $(abspath ../bpftool/src)
 BPFTOOL ?= $(abspath $(OUTPUT)/bpftool/bpftool)
 XDPLOADER_SRC := $(abspath ../xdp-tools/xdp-loader)
 XDPLOADER ?= $(abspath $(OUTPUT)/xdp-tools/xdp-loader)
+IPROUTE2_SRC := $(abspath ../iproute2)
+IPROUTE2_TC ?= $(abspath $(OUTPUT)/iproute2/tc)
 
 CFLAGS ?= -I$(OUTPUT)
 LDFLAGS ?= -L$(OUTPUT)
@@ -24,9 +26,9 @@ LIBS = -l:libbpf.a -lelf -lz
 # xdp_kern.o: XDP program
 # xdp_stats: Control program in the user land
 # $(BPFTOOL): Use to debug XDP programs
-all: $(OUTPUT)/xdp_kern.o $(OUTPUT)/xdp_stats $(OUTPUT)/tc_kern.o $(BPFTOOL) $(XDPLOADER)
+all: $(OUTPUT)/xdp_kern.o $(OUTPUT)/xdp_stats $(OUTPUT)/tc_kern.o $(BPFTOOL) $(XDPLOADER) $(IPROUTE2_TC)
 
-$(OUTPUT) $(OUTPUT)/libbpf $(dir $(BPFTOOL)) $(dir $(XDPLOADER)):
+$(OUTPUT) $(OUTPUT)/libbpf $(dir $(BPFTOOL)) $(dir $(XDPLOADER)) $(dir $(IPROUTE2_TC)):
 	mkdir -p $@
 
 $(BPFTOOL): $(wildcard $(BPFTOOL_SRC)/*.[ch] $(BPFTOOL_SRC)/Makefile) | $(dir $(BPFTOOL))
@@ -40,6 +42,13 @@ $(LIBBPF_OBJECT): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OU
 	$(MAKE) -C $(LIBBPF_SRC) BUILD_STATIC_ONLY=1 \
 	OBJDIR=$(dir $@)/libbpf DESTDIR=$(dir $@) \
 	INCLUDEDIR= LIBDIR= UAPIDIR= install
+
+$(IPROUTE2_TC): $(wildcard $(IPROUTE2_SRC/*[ch]) (LIBBPF_SRC)/Makefile) | $(dir $(IPROUTE2_TC))
+	cd $(IPROUTE2_SRC)
+	git apply ../misc/iproute2.diff
+	./configure
+	make
+	mv $(IPROUTE2_SRC)/tc/tc $@
 
 $(OUTPUT)/xdp_kern.o: xdp_kern.c $(LIBBPF_OBJECT) | $(OUTPUT)
 	$(CLANG) \
@@ -58,7 +67,7 @@ $(OUTPUT)/xdp_kern.o: xdp_kern.c $(LIBBPF_OBJECT) | $(OUTPUT)
 $(OUTPUT)/xdp_stats: xdp_stats.c $(LIBBPF_OBJECT) | $(OUTPUT)
 	$(CC) -Wall -g -O2 $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
 
-$(OUTPUT)/tc_kern.o: tc_kern.c $(LIBBPF_OBJECT) | $(OUTPUT)
+$(OUTPUT)/tc_kern.o: tc_kern.c $(LIBBPF_OBJECT) $(IPROUTE2_TC) | $(OUTPUT)
 	$(CLANG) \
 	    -g -O2 \
 	    -target bpf \
