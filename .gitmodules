@@ -7,3 +7,6 @@
 [submodule "xdp-tools"]
 	path = xdp-tools
 	url = https://github.com/xdp-project/xdp-tools
+[submodule "iproute2"]
+	path = iproute2
+	url = git://git.kernel.org/pub/scm/network/iproute2/iproute2.git
