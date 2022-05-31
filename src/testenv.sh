@@ -44,6 +44,11 @@ xdp-loader load -p /sys/fs/bpf/veth-ns1 -s xdp_stats veth-ns1 .output/xdp_kern.o
 xdp-loader load -p /sys/fs/bpf/veth-ns2 -s xdp_stats veth-ns2 .output/xdp_kern.o
 xdp-loader load -p /sys/fs/bpf/veth-ns3 -s xdp_stats veth-ns3 .output/xdp_kern.o
 
+.output/iproute2/tc qdisc add dev veth-ns1 clsact
+.output/iproute2/tc filter add dev veth-ns1 ingress bpf da obj .output/tc_kern.o sec tc_ingress
+.output/iproute2/tc filter add dev veth-ns1 egress bpf da obj .output/tc_kern.o sec tc_egress
+.output/iproute2/tc filter show dev veth-ns1 ingress
+
 # test connectivity
 nsenter --net=/var/run/netns/ns2 ping -c 1 192.168.100.1
 nsenter --net=/var/run/netns/ns3 ping -c 1 192.168.100.1
