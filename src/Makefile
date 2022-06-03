@@ -26,7 +26,7 @@ LIBS = -l:libbpf.a -lelf -lz
 # xdp_kern.o: XDP program
 # xdp_stats: Control program in the user land
 # $(BPFTOOL): Use to debug XDP programs
-all: $(OUTPUT)/xdp_kern.o $(OUTPUT)/xdp_stats $(OUTPUT)/tc_kern.o $(BPFTOOL) $(XDPLOADER) $(IPROUTE2_TC)
+all: $(OUTPUT)/xdp_kern.o $(OUTPUT)/xdp_stats $(OUTPUT)/tc_kern.o $(OUTPUT)/tc_stats $(BPFTOOL) $(XDPLOADER) $(IPROUTE2_TC)
 
 $(OUTPUT) $(OUTPUT)/libbpf $(dir $(BPFTOOL)) $(dir $(XDPLOADER)) $(dir $(IPROUTE2_TC)):
 	mkdir -p $@
@@ -82,6 +82,9 @@ $(OUTPUT)/tc_kern.o: tc_kern.c $(LIBBPF_OBJECT) $(IPROUTE2_TC) | $(OUTPUT)
 	    -Werror \
 	    -c $< -o $@
 	$(LLVM_STRIP) -g $@
+
+$(OUTPUT)/tc_stats: tc_stats.c $(LIBBPF_OBJECT) | $(OUTPUT)
+	$(CC) -Wall -g -O2 $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
 
 clean:
 	rm -rf $(OUTPUT)

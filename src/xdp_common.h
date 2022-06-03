@@ -12,6 +12,14 @@
 
 #define MAX_STATS_ENTRIES 256
 
+struct tc_stats_key {
+    __u32 ifindex;
+    union {
+        __be32 ipv4;
+        struct in6_addr ipv6;
+    } addr;
+};
+
 struct metrics {
     __u64   packets;
     __u64   bytes;

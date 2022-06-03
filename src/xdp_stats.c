@@ -88,7 +88,8 @@ void print_stats(char *ifname) {
                 strncpy(daddr_str, p, INET_ADDRSTRLEN-1);
             else
                 return;
-            fprintf(stdout, "\t[%16s -> %16s]: %lld packets %lld bytes\n", saddr_str, daddr_str, sum.metrics.packets, sum.metrics.bytes);
+            if (found_ip)
+                fprintf(stdout, "\t[%16s -> %16s]: %lld packets %lld bytes\n", saddr_str, daddr_str, sum.metrics.packets, sum.metrics.bytes);
         }
         key = next_key;
     }
@@ -138,7 +139,8 @@ void print_stats(char *ifname) {
                 strncpy(daddr_str, p, INET6_ADDRSTRLEN-1);
             else
                 return;
-            fprintf(stdout, "\t[%40s -> %40s]: %lld packets %lld bytes\n", saddr_str, daddr_str, sum.metrics.packets, sum.metrics.bytes);
+            if (found_ip)
+                fprintf(stdout, "\t[%40s -> %40s]: %lld packets %lld bytes\n", saddr_str, daddr_str, sum.metrics.packets, sum.metrics.bytes);
         }
         memcpy(&key_v6, &next_key_v6, sizeof(struct in6_addr));
     }

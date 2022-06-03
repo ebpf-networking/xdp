@@ -7,14 +7,6 @@
 
 #include "xdp_common.h"
 
-struct tc_stats_key {
-    __u32 ifindex;
-    union {
-        __be32 ipv4;
-        struct in6_addr ipv6;
-    } addr;
-};
-
 // Make sure to use the tc binary linked with libbpf for btf map
 // This map is pinned to /sys/fs/bpf/tc/globals
 struct {
