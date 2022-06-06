@@ -16,4 +16,5 @@ COPY --from=builder /tmp/xdp/src/.output/xdp_stats /root/bin/
 COPY --from=builder /tmp/xdp/src/.output/xdp-tools/xdp-loader /root/bin/
 COPY --from=builder /tmp/xdp/src/.output/bpftool/bpftool /root/bin/
 COPY --from=builder /tmp/xdp/src/.output/tc_kern.o /root/bin/
+COPY --from=builder /tmp/xdp/src/.output/tc_stats /root/bin/
 COPY --from=builder /tmp/xdp/src/.output/iproute2/tc /root/bin/
