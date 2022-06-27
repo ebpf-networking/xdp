@@ -22,12 +22,22 @@ void sk_extractv4_key(struct bpf_sock_ops *ops,
     key->dport = READ_ONCE(ops->remote_port) >> 16;
 }
 
+/*
+ * test if socket pairs are local
+ */
+static inline
+int sk_is_local(struct sock_key *key) {
+    return 1;
+}
+
 static inline
 void bpf_sock_ops_ipv4(struct bpf_sock_ops *skops)
 {
     struct sock_key key = {};
 
     sk_extractv4_key(skops, &key);
+    if (!sk_is_local(&key))
+        return;
 
     // insert the source socket in the sock_ops_map
     int ret = bpf_sock_hash_update(skops, &sock_ops_map, &key, BPF_NOEXIST);
@@ -50,11 +60,11 @@ int bpf_sockops_v4(struct bpf_sock_ops *skops)
         case BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB:
         case BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB:
         if (family == 2) { //AF_INET
-                        bpf_sock_ops_ipv4(skops);
+            bpf_sock_ops_ipv4(skops);
         }
-                break;
+            break;
         default:
-                break;
+            break;
         }
     return 0;
 }
