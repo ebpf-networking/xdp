@@ -1,5 +1,6 @@
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
 #include "sockops.h"
 
@@ -21,7 +22,6 @@ void sk_extractv4_key(struct bpf_sock_ops *ops,
     key->dport = READ_ONCE(ops->remote_port) >> 16;
 }
 
-
 static inline
 void bpf_sock_ops_ipv4(struct bpf_sock_ops *skops)
 {
@@ -30,18 +30,18 @@ void bpf_sock_ops_ipv4(struct bpf_sock_ops *skops)
     sk_extractv4_key(skops, &key);
 
     // insert the source socket in the sock_ops_map
-    int ret = sock_hash_update(skops, &sock_ops_map, &key, BPF_NOEXIST);
-    printk("<<< ipv4 op = %d, port %d --> %d\n",
+    int ret = bpf_sock_hash_update(skops, &sock_ops_map, &key, BPF_NOEXIST);
+    bpf_printk("<<< ipv4 op = %d, port %d --> %d\n",
         skops->op, skops->local_port, bpf_ntohl(skops->remote_port));
     if (ret != 0) {
-        printk("FAILED: sock_hash_update ret: %d\n", ret);
+        bpf_printk("FAILED: bpf_sock_hash_update ret: %d\n", ret);
     }
 }
 
-__section("sockops")
+SEC("sockops")
 int bpf_sockops_v4(struct bpf_sock_ops *skops)
 {
-    uint32_t family, op;
+    __u32 family, op;
 
     family = skops->family;
     op = skops->op;
@@ -59,5 +59,4 @@ int bpf_sockops_v4(struct bpf_sock_ops *skops)
     return 0;
 }
 
-char ____license[] __section("license") = "GPL";
-int _version __section("version") = 1;
+char _license[] SEC("license") = "GPL";

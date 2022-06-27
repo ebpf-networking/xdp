@@ -6,32 +6,23 @@
  *
  */
 
-/* Structure representing an L7 sock */
+#ifndef READ_ONCE
+#define READ_ONCE(x)        (*(volatile typeof(x) *)&x)
+#endif
+
 struct sock_key {
-	union {
-		struct {
-			__u32		sip4;
-			__u32		pad1;
-			__u32		pad2;
-			__u32		pad3;
-		};
-		union v6addr	sip6;
-	};
-	union {
-		struct {
-			__u32		dip4;
-			__u32		pad4;
-			__u32		pad5;
-			__u32		pad6;
-		};
-		union v6addr	dip6;
-	};
-	__u8 family;
-	__u8 pad7;
-	__u16 pad8;
-	__u32 sport;
-	__u32 dport;
-} __packed;
+    __u32 sip4;
+    __u32 dip4;
+    __u8 family;
+    __u8 pad1;
+    __u16 pad2;
+    // this padding required for 64bit alignment
+    // else ebpf kernel verifier rejects loading
+    // of the program
+    __u32 pad3;
+    __u32 sport;
+    __u32 dport;
+} __attribute__((packed));
 
 struct {
     __uint(type, BPF_MAP_TYPE_SOCKHASH);
