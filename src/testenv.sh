@@ -68,17 +68,35 @@ ip link set br0 up
 #.output/iproute2/tc qdisc add dev veth-ns1 clsact
 #.output/iproute2/tc filter add dev veth-ns1 ingress bpf da obj .output/tc_kern.o sec tc_ingress
 #.output/iproute2/tc filter add dev veth-ns1 egress bpf da obj .output/tc_kern.o sec tc_egress
-#
+
 #.output/iproute2/tc qdisc add dev veth-ns2 clsact
 #.output/iproute2/tc filter add dev veth-ns2 ingress bpf da obj .output/tc_kern.o sec tc_ingress
 #.output/iproute2/tc filter add dev veth-ns2 egress bpf da obj .output/tc_kern.o sec tc_egress
-#
+
 #.output/iproute2/tc qdisc add dev veth-ns3 clsact
 #.output/iproute2/tc filter add dev veth-ns3 ingress bpf da obj .output/tc_kern.o sec tc_ingress
 #.output/iproute2/tc filter add dev veth-ns3 egress bpf da obj .output/tc_kern.o sec tc_egress
 
 #.output/iproute2/tc filter show dev veth-ns1 ingress
 #.output/iproute2/tc filter show dev veth-ns1 egress
+
+##################################################
+#
+# Loading sockops/sockmap program using bpftool
+# These steps can be enabled/disabled as needed
+#
+##################################################
+
+# load and attach sockops program 
+bpftool prog load .output/sockops.o "/sys/fs/bpf/sockop"
+bpftool cgroup attach "/sys/fs/cgroup/" sock_ops pinned "/sys/fs/bpf/sockop"
+
+# pin sock_ops_map to a designated place
+#MAP_ID=$(sudo bpftool prog show pinned "/sys/fs/bpf/sockop" | grep -o -E 'map_ids [0-9]+' | awk '{print $2}')
+#bpftool map pin id $MAP_ID "/sys/fs/bpf/sock_ops_map"
+
+bpftool prog load .output/sockmap_redir.o "/sys/fs/bpf/bpf_redir" map name sock_ops_map pinned "/sys/fs/bpf/sock_ops_map"
+bpftool prog attach pinned "/sys/fs/bpf/bpf_redir" msg_verdict pinned "/sys/fs/bpf/sock_ops_map"
 
 # test connectivity
 nsenter --net=/var/run/netns/ns2 ping -c 1 192.168.100.1
