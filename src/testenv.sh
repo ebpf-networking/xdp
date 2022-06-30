@@ -5,6 +5,13 @@ set -e
 # This script creates 3 netns. For each netns, it creates a veth pair.
 # The end of each veth pair is connected to a Linux bridge.
 
+##################################################
+#
+# These steps create a basic Linux networking 
+# environment using namespaces, veth, bridge
+#
+##################################################
+
 # create netns
 ip netns add ns1
 ip netns add ns2
@@ -39,22 +46,36 @@ ip link set veth-ns2 master br0
 ip link set veth-ns3 master br0
 ip link set br0 up
 
+##################################################
+#
+# Loading xdp program with xdp-loader
+# These steps can be enabled/disabled as needed
+#
+##################################################
+
 # note: add '-vv' if xdp-loader fails due to verifier to get more debugging hints
-xdp-loader load -p /sys/fs/bpf/veth-ns1 -s xdp_stats veth-ns1 .output/xdp_kern.o
-xdp-loader load -p /sys/fs/bpf/veth-ns2 -s xdp_stats veth-ns2 .output/xdp_kern.o
-xdp-loader load -p /sys/fs/bpf/veth-ns3 -s xdp_stats veth-ns3 .output/xdp_kern.o
+#xdp-loader load -p /sys/fs/bpf/veth-ns1 -s xdp_stats veth-ns1 .output/xdp_kern.o
+#xdp-loader load -p /sys/fs/bpf/veth-ns2 -s xdp_stats veth-ns2 .output/xdp_kern.o
+#xdp-loader load -p /sys/fs/bpf/veth-ns3 -s xdp_stats veth-ns3 .output/xdp_kern.o
 
-.output/iproute2/tc qdisc add dev veth-ns1 clsact
-.output/iproute2/tc filter add dev veth-ns1 ingress bpf da obj .output/tc_kern.o sec tc_ingress
-.output/iproute2/tc filter add dev veth-ns1 egress bpf da obj .output/tc_kern.o sec tc_egress
+##################################################
+#
+# Loading tc program with tc command
+# These steps can be enabled/disabled as needed
+#
+##################################################
 
-.output/iproute2/tc qdisc add dev veth-ns2 clsact
-.output/iproute2/tc filter add dev veth-ns2 ingress bpf da obj .output/tc_kern.o sec tc_ingress
-.output/iproute2/tc filter add dev veth-ns2 egress bpf da obj .output/tc_kern.o sec tc_egress
-
-.output/iproute2/tc qdisc add dev veth-ns3 clsact
-.output/iproute2/tc filter add dev veth-ns3 ingress bpf da obj .output/tc_kern.o sec tc_ingress
-.output/iproute2/tc filter add dev veth-ns3 egress bpf da obj .output/tc_kern.o sec tc_egress
+#.output/iproute2/tc qdisc add dev veth-ns1 clsact
+#.output/iproute2/tc filter add dev veth-ns1 ingress bpf da obj .output/tc_kern.o sec tc_ingress
+#.output/iproute2/tc filter add dev veth-ns1 egress bpf da obj .output/tc_kern.o sec tc_egress
+#
+#.output/iproute2/tc qdisc add dev veth-ns2 clsact
+#.output/iproute2/tc filter add dev veth-ns2 ingress bpf da obj .output/tc_kern.o sec tc_ingress
+#.output/iproute2/tc filter add dev veth-ns2 egress bpf da obj .output/tc_kern.o sec tc_egress
+#
+#.output/iproute2/tc qdisc add dev veth-ns3 clsact
+#.output/iproute2/tc filter add dev veth-ns3 ingress bpf da obj .output/tc_kern.o sec tc_ingress
+#.output/iproute2/tc filter add dev veth-ns3 egress bpf da obj .output/tc_kern.o sec tc_egress
 
 #.output/iproute2/tc filter show dev veth-ns1 ingress
 #.output/iproute2/tc filter show dev veth-ns1 egress
