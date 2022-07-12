@@ -89,6 +89,7 @@ ip link set br0 up
 
 # load and attach sockops program 
 bpftool prog load .output/sockops.o "/sys/fs/bpf/sockop"
+# use either /sys/fs/cgroup or /sys/fs/cgroup/unified (how to detect when to use which?
 bpftool cgroup attach "/sys/fs/cgroup/" sock_ops pinned "/sys/fs/bpf/sockop"
 
 # pin sock_ops_map to a designated place
