@@ -18,5 +18,5 @@ COPY --from=builder /tmp/xdp/src/.output/bpftool/bpftool /root/bin/
 COPY --from=builder /tmp/xdp/src/.output/tc_kern.o /root/bin/
 COPY --from=builder /tmp/xdp/src/.output/tc_stats /root/bin/
 COPY --from=builder /tmp/xdp/src/.output/iproute2/tc /root/bin/
-COPY --from=builder /tmp/xdp/src/.output/iproute2/sockmap_redir.o /root/bin/
-COPY --from=builder /tmp/xdp/src/.output/iproute2/sockops.o /root/bin/
+COPY --from=builder /tmp/xdp/src/.output/sockmap_redir.o /root/bin/
+COPY --from=builder /tmp/xdp/src/.output/sockops.o /root/bin/
