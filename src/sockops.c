@@ -59,11 +59,12 @@ int bpf_sockops_v4(struct bpf_sock_ops *skops)
     switch (op) {
         case BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB:
         case BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB:
-        if (family == 2) { //AF_INET
-            bpf_sock_ops_ipv4(skops);
-        }
+            if (family == 2) { //AF_INET
+                bpf_sock_ops_ipv4(skops);
+            }
             break;
         default:
+            bpf_printk("not supported op: %d\n", op);
             break;
         }
     return 0;
