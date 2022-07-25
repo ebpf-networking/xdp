@@ -11,8 +11,14 @@
 #endif
 
 struct sock_key {
-    __u32 sip4;
-    __u32 dip4;
+    union {
+        __u32 ip4;
+        __u32 ip6[4];
+    } src;
+    union {
+        __u32 ip4;
+        __u32 ip6[4];
+    } dst;
     __u8 family;
     __u8 pad1;
     __u16 pad2;
