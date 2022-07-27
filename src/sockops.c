@@ -107,19 +107,19 @@ int bpf_sockops(struct bpf_sock_ops *skops)
             }
             else if (family == 10) { //AF_INET6
                 if (skops->remote_ip4) {
-                    bpf_printk("remote_ip4: %x, local_ip4: %x\n", sockops->remote_ip4, sockops->local_ip4);
+                    bpf_printk("remote_ip4: %x, local_ip4: %x\n", skops->remote_ip4, skops->local_ip4);
                     bpf_sock_ops_ipv4(skops);
                 }
                 else {
                     bpf_printk("remote_ip6: %x:%x:%x:%x, local_ip6: %x:%x:%x:%x\n",
-                            sockops->remote_ip6[0],
-                            sockops->remote_ip6[1],
-                            sockops->remote_ip6[2],
-                            sockops->remote_ip6[3],
-                            sockops->local_ip6[0],
-                            sockops->local_ip6[1],
-                            sockops->local_ip6[2],
-                            sockops->local_ip6[3]);
+                            skops->remote_ip6[0],
+                            skops->remote_ip6[1],
+                            skops->remote_ip6[2],
+                            skops->remote_ip6[3],
+                            skops->local_ip6[0],
+                            skops->local_ip6[1],
+                            skops->local_ip6[2],
+                            skops->local_ip6[3]);
                     bpf_sock_ops_ipv6(skops);
                 }
             }
