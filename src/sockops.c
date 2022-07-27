@@ -106,7 +106,7 @@ int bpf_sockops(struct bpf_sock_ops *skops)
                 bpf_sock_ops_ipv4(skops);
             }
             else if (family == 10) { //AF_INET6
-                if (skops->remote_ip4) {
+                if (skops->remote_ip4 && skops->remote_ip4 != 0x600007f) {
                     bpf_printk("remote_ip4: %x, local_ip4: %x\n", skops->remote_ip4, skops->local_ip4);
                     bpf_sock_ops_ipv4(skops);
                 }
