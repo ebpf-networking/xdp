@@ -34,14 +34,13 @@ static inline
 void bpf_sock_ops_ipv4(struct bpf_sock_ops *skops)
 {
     struct sock_key key = {};
-    __builtin_memset(&key, 0, sizeof(key));
 
     sk_extractv4_key(skops, &key);
     if (!sk_is_local(&key))
         return;
 
     // insert the source socket in the sock_ops_map
-    int ret = bpf_sock_hash_update(skops, &sock_ops_map, &key, BPF_NOEXIST);
+    int ret = bpf_sock_hash_update(skops, &sock_ops_map, &key, BPF_ANY);
     bpf_printk("<<< ipv4 op = %d, port %d --> %d\n",
         skops->op, skops->local_port, bpf_ntohl(skops->remote_port));
     if (ret != 0) {
@@ -78,14 +77,13 @@ static inline
 void bpf_sock_ops_ipv6(struct bpf_sock_ops *skops)
 {
     struct sock_key key = {};
-    __builtin_memset(&key, 0, sizeof(key));
 
     sk_extractv6_key(skops, &key);
     if (!sk_is_local(&key))
         return;
 
     // insert the source socket in the sock_ops_map
-    int ret = bpf_sock_hash_update(skops, &sock_ops_map, &key, BPF_NOEXIST);
+    int ret = bpf_sock_hash_update(skops, &sock_ops_map, &key, BPF_ANY);
     bpf_printk("<<< ipv6 op = %d, port %d --> %d\n",
         skops->op, skops->local_port, bpf_ntohl(skops->remote_port));
     if (ret != 0) {
@@ -108,7 +106,10 @@ int bpf_sockops(struct bpf_sock_ops *skops)
                 bpf_sock_ops_ipv4(skops);
             }
             else if (family == 10) { //AF_INET6
-                bpf_sock_ops_ipv6(skops);
+                if (skops->remote_ip4)
+                    bpf_sock_ops_ipv4(skops);
+                else
+                    bpf_sock_ops_ipv6(skops);
             }
             break;
         default:

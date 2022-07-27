@@ -46,8 +46,12 @@ int bpf_tcpip_bypass(struct sk_msg_md *msg)
     struct  sock_key key = {};
     if (msg->family == 2)
         sk_msg_extract4_key(msg, &key);
-    else if (msg->family == 10)
-        sk_msg_extract6_key(msg, &key);
+    else if (msg->family == 10) {
+        if (msg->remote_ip4)
+            sk_msg_extract4_key(msg, &key);
+        else
+            sk_msg_extract6_key(msg, &key);
+    }
     else
         return SK_PASS;
 
