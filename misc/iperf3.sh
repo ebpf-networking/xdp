@@ -1,7 +1,7 @@
 #!/bin/bash -x
 function run_server()
 {
-  kubectl run pod1 --image=networkstatic/iperf3 --overrides="{\"spec\": { \"nodeSelector\": {\"kubernetes.io/hostname\": \"$1\"}}}" --command -- iperf3 -4 -s 
+  kubectl run pod1 --image=networkstatic/iperf3 --overrides="{\"spec\": { \"nodeSelector\": {\"kubernetes.io/hostname\": \"$1\"}}}" --command -- iperf3 -s --forceflush
 }
 
 function run_client()
@@ -20,7 +20,32 @@ spec:
       containers:
       - name: iperf3-client
         image: networkstatic/iperf3
-        command: ["iperf3", "-4", "-c", "$ip", "-t", "10"]
+        command: ["iperf3", "-c", "$ip", "-t", "10", "--forceflush"]
+      nodeName: $1
+      restartPolicy: Never
+  backoffLimit: 4
+EOF
+  kubectl apply -f client-job.yaml
+  client_pod=$(kubectl get pods --selector=job-name=iperf3-client --output=jsonpath='{.items[*].metadata.name}')
+}
+
+function run_client_v6()
+{
+  ipq=$(kubectl get pods pod1 -o json|jq ".status.podIPs[1].ip")
+  ipq1=${ipq#\"}
+  ip=${ipq1%\"}
+  cat >client-job.yaml <<EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: iperf3-client
+spec:
+  template:
+    spec:
+      containers:
+      - name: iperf3-client
+        image: networkstatic/iperf3
+        command: ["iperf3", "-c", "$ip", "-t", "10", "--forceflush"]
       nodeName: $1
       restartPolicy: Never
   backoffLimit: 4
@@ -58,6 +83,7 @@ run_server ${server_hostname}
 server_hostip=$(hostip_of pod1)
 server_uid=$(uid_of pod1)
 kubectl wait --for=condition=Ready pod/pod1
+#run_client_v6 ${client_hostname}
 run_client ${client_hostname}
 client_hostip=$(hostip_of ${client_pod})
 client_uid=$(uid_of ${client_pod})
