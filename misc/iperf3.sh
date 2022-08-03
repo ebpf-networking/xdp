@@ -1,4 +1,16 @@
 #!/bin/bash -x
+
+# Prereq:
+# - jq
+# - git
+# - perf
+# - perl
+
+git clone https://github.com/brendangregg/FlameGraph.git
+
+iperf3_runtime=10
+wait_time=$((iperf3_runtime+10))
+
 function run_server()
 {
   kubectl run pod1 --image=networkstatic/iperf3 --overrides="{\"spec\": { \"nodeSelector\": {\"kubernetes.io/hostname\": \"$1\"}}}" --command -- iperf3 -s --forceflush
@@ -20,7 +32,7 @@ spec:
       containers:
       - name: iperf3-client
         image: networkstatic/iperf3
-        command: ["iperf3", "-c", "$ip", "-t", "10", "--forceflush"]
+        command: ["iperf3", "-c", "$ip", "-t", "$iperf3_runtime", "--forceflush"]
       nodeName: $1
       restartPolicy: Never
   backoffLimit: 4
@@ -45,7 +57,7 @@ spec:
       containers:
       - name: iperf3-client
         image: networkstatic/iperf3
-        command: ["iperf3", "-c", "$ip", "-t", "10", "--forceflush"]
+        command: ["iperf3", "-c", "$ip", "-t", "$iperf3_runtime", "--forceflush"]
       nodeName: $1
       restartPolicy: Never
   backoffLimit: 4
@@ -70,6 +82,10 @@ function uid_of()
   echo $uid
 }
 
+function container_of() {
+  echo $(kubectl get pod $1 -o json | jq -r ".status.containerStatuses[0].containerID" | cut -b 14-)
+}
+
 function data_of()
 {
   tail -n 1 $1 |
@@ -88,8 +104,21 @@ run_client ${client_hostname}
 client_hostip=$(hostip_of ${client_pod})
 client_uid=$(uid_of ${client_pod})
 kubectl wait --for=condition=Ready pod/${client_pod}
-sleep 20
-kubectl logs pod1 >${output_dir}/server.log
+server_containerid=$(container_of pod1)
+client_containerid=$(container_of ${client_pod})
+
+server_alt_uid=$(echo -n $server_uid|tr '-' '_')
+client_alt_uid=$(echo -n $client_uid|tr '-' '_')
+perf record -g -a -o server-perf.data -e cycles -G kubepods-besteffort-pod${server_alt_uid}.slice:cri-containerd:${server_containerid} sleep $iperf3_runtime &
+perf record -g -a -o client-perf.data -e cycles -G kubepods-besteffort-pod${client_alt_uid}.slice:cri-containerd:${client_containerid} sleep $iperf3_runtime &
+
+sleep $wait_time
+kubectl logs pod1 >${output_dir}/client.log
 kubectl logs ${client_pod} >${output_dir}/client.log
+perf script -i server-perf.data | ./FlameGraph/stackcollapse-perf.pl | ./FlameGraph/flamegraph.pl >${output_dir}/server-flamegraph.svg
+perf script -i client-perf.data | ./FlameGraph/stackcollapse-perf.pl | ./FlameGraph/flamegraph.pl >${output_dir}/client-flamegraph.svg
+
+rm -f server-perf.data
+rm -f client-perf.data
 kubectl delete pod pod1
 kubectl delete job iperf3-client
