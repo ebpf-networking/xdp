@@ -86,11 +86,15 @@ function container_of() {
   echo $(kubectl get pod $1 -o json | jq -r ".status.containerStatuses[0].containerID" | cut -b 14-)
 }
 
-function data_of()
-{
-  tail -n 1 $1 |
-	  awk '{if ( $8 == "Mbits/sec") print $7*1e6*60; else if ( $8 == "Gbits/sec") print $7*1e9*60;}'
+function cpu_of() {
+  pid=$(cat /sys/fs/cgroup/perf_event/kubepods-besteffort-pod${1}.slice:cri-containerd:${2}/cgroup.procs)
+  for i in $(seq 0 $iperf3_runtime)
+  do
+    ps -p $pid -o %cpu= >> ${output_dir}/${3}_cpu.txt
+    sleep 1
+  done
 }
+
 server_hostname=$1
 client_hostname=$2
 output_dir=$3
@@ -111,6 +115,9 @@ server_alt_uid=$(echo -n $server_uid|tr '-' '_')
 client_alt_uid=$(echo -n $client_uid|tr '-' '_')
 perf record -g -a -o server-perf.data -e cycles -G kubepods-besteffort-pod${server_alt_uid}.slice:cri-containerd:${server_containerid} sleep $iperf3_runtime &
 perf record -g -a -o client-perf.data -e cycles -G kubepods-besteffort-pod${client_alt_uid}.slice:cri-containerd:${client_containerid} sleep $iperf3_runtime &
+
+cpu_of $server_alt_uid $server_containerid "server" &
+cpu_of $client_alt_uid $client_containerid "client" &
 
 sleep $wait_time
 kubectl logs pod1 >${output_dir}/client.log
