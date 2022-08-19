@@ -35,7 +35,7 @@ $(BPFTOOL): $(wildcard $(BPFTOOL_SRC)/*.[ch] $(BPFTOOL_SRC)/Makefile) | $(dir $(
 	$(MAKE) OUTPUT=$(dir $(BPFTOOL)) -C $(BPFTOOL_SRC)
 
 $(XDPLOADER): $(wildcard $(XDPLOADER_SRC)/*.[ch] $(XDPLOADER_SRC)/Makefile) | $(dir $(XDPLOADER))
-	$(MAKE) -C $(XDPLOADER_SRC)
+	(cd $(XDPLOADER_SRC)/..; ./configure; make)
 	mv $(XDPLOADER_SRC)/xdp-loader $@
 
 $(LIBBPF_OBJECT): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPUT)/libbpf
