@@ -3,7 +3,7 @@
 	url = https://github.com/libbpf/libbpf
 [submodule "bpftool"]
 	path = bpftool
-	url = git@github.com:libbpf/bpftool.git
+	url = https://github.com/libbpf/bpftool
 [submodule "xdp-tools"]
 	path = xdp-tools
 	url = https://github.com/xdp-project/xdp-tools
