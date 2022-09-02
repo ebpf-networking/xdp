@@ -8,6 +8,11 @@ RUN dnf -y update && \
 COPY ./ /tmp/xdp
 RUN make -C /tmp/xdp/src
 
+FROM golang:alpine as gobuilder
+COPY ./src/sockmap_daemon.go $GOPATH/src
+RUN cd $GOPATH/src && go mod init sockmap && ls -al /go/src
+RUN cd $GOPATH/src && go build -o /sockmap_daemon
+
 FROM frolvlad/alpine-glibc:latest
 RUN apk add libelf
 RUN mkdir -p /root/bin
@@ -20,3 +25,4 @@ COPY --from=builder /tmp/xdp/src/.output/tc_stats /root/bin/
 COPY --from=builder /tmp/xdp/src/.output/iproute2/tc /root/bin/
 COPY --from=builder /tmp/xdp/src/.output/sockmap_redir.o /root/bin/
 COPY --from=builder /tmp/xdp/src/.output/sockops.o /root/bin/
+COPY --from=gobuilder /sockmap_daemon /root/bin/sockmap_daemon
