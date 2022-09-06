@@ -4,6 +4,7 @@ import (
     "fmt"
     "os"
     "io"
+    "time"
 )
 
 func fileCopy(src, dst string) error {
@@ -39,5 +40,7 @@ func main() {
     fileCopy("/root/bin/bpftool", "/opt/sockmap/bpftool")
     fileCopy("/root/bin/sockmap_redir.o", "/opt/sockmap/sockmap_redir.o")
     fileCopy("/root/bin/sockops.o", "/opt/sockmap/sockops.o")
-    select {}
+    for {
+        time.Sleep(time.Duration(1<<63 - 1))
+    }
 }
