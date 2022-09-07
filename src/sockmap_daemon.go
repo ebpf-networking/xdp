@@ -50,12 +50,7 @@ func main() {
     fileCopy("/root/bin/sockops.o", "/opt/sockmap/sockops.o")
 
     // Load and attach ebpf program
-    // ./bpftool prog load ./sockops.o "/sys/fs/bpf/sockop"
-    // ./bpftool cgroup attach "/sys/fs/cgroup/unified" sock_ops pinned "/sys/fs/bpf/sockop"
-    // ./bpftool prog load ./sockmap_redir.o "/sys/fs/bpf/bpf_redir" map name sock_ops_map pinned "/sys/fs/bpf/sock_ops_map"
-    // ./bpftool prog attach pinned "/sys/fs/bpf/bpf_redir" msg_verdict pinned "/sys/fs/bpf/sock_ops_map"
-
-    cmd := exec.Command("/opt/sockmap/bpftool", "prog", "load", "/opt/sockmap/sockops.o", "sys/fs/bpf/sockop")
+    cmd := exec.Command("/opt/sockmap/bpftool", "prog", "load", "/opt/sockmap/sockops.o", "/sys/fs/bpf/sockop")
     err := cmd.Run()
     if err != nil {
         log.Fatal(err)
