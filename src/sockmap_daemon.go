@@ -59,7 +59,7 @@ func main() {
         log.Fatal(err)
     }
     fmt.Println("Done")
-
+    /*
     fmt.Print("Attaching sockops program...")
     cmd = exec.Command("/opt/sockmap/bpftool", "cgroup", "attach", "/sys/fs/cgroup/unified", "sock_ops", "pinned", "/sys/fs/bpf/sockop")
     err = cmd.Run()
@@ -83,6 +83,7 @@ func main() {
         log.Fatal(err)
     }
     fmt.Println("Done")
+    */
 
     // TODO: need an API server to load/unload the sockmap program
     for {
