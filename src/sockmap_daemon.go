@@ -52,6 +52,7 @@ func main() {
     fmt.Println("Done")
 
     // Load and attach ebpf program
+    /*
     fmt.Print("Loading sockops program...")
     cmd := exec.Command("/opt/sockmap/bpftool", "prog", "load", "/opt/sockmap/sockops.o", "/sys/fs/bpf/sockop")
     err := cmd.Run()
@@ -59,7 +60,7 @@ func main() {
         log.Fatal(err)
     }
     fmt.Println("Done")
-    /*
+
     fmt.Print("Attaching sockops program...")
     cmd = exec.Command("/opt/sockmap/bpftool", "cgroup", "attach", "/sys/fs/cgroup/unified", "sock_ops", "pinned", "/sys/fs/bpf/sockop")
     err = cmd.Run()
