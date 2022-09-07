@@ -32,6 +32,11 @@ func fileCopy(src, dst string) error {
     defer destination.Close()
 
     _, err = io.Copy(destination, source)
+    if err != nil {
+        return err
+    }
+
+    err = os.Chmod(dst, 0544)
     return err
 }
 
