@@ -13,7 +13,7 @@ COPY ./src/sockmap_daemon.go $GOPATH/src
 RUN cd $GOPATH/src && go mod init sockmap && ls -al /go/src
 RUN cd $GOPATH/src && go build -o /sockmap_daemon
 
-FROM frolvlad/alpine-glibc:latest
+FROM frolvlad/alpine-glibc:alpine-3.14_glibc-2.33
 RUN apk add libelf
 RUN mkdir -p /root/bin
 COPY --from=builder /tmp/xdp/src/.output/xdp_kern.o /root/bin/

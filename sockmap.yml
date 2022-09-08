@@ -65,7 +65,12 @@ spec:
         volumeMounts:
         - name: opt
           mountPath: /opt
+        - name: sys
+          mountPath: /sys
       volumes:
       - name: opt
         hostPath:
           path: /opt
+      - name: sys
+        hostPath:
+          path: /sys
