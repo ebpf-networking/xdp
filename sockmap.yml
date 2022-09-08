@@ -60,8 +60,8 @@ spec:
         command:
         - /root/bin/sockmap_daemon
         securityContext:
-          capabilities:
-            add: ["NET_ADMIN"]
+          privileged: true
+          allowPrivilegeEscalation: true
         volumeMounts:
         - name: opt
           mountPath: /opt
