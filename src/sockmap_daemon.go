@@ -3,10 +3,10 @@ package main
 import (
     "fmt"
     "os"
-    //"os/exec"
+    "os/exec"
     "io"
     "time"
-    //"log"
+    "log"
 )
 
 func fileCopy(src, dst string) error {
@@ -52,7 +52,6 @@ func main() {
     fmt.Println("Done")
 
     // Load and attach ebpf program
-    /*
     fmt.Print("Loading sockops program...")
     cmd := exec.Command("/opt/sockmap/bpftool", "prog", "load", "/opt/sockmap/sockops.o", "/sys/fs/bpf/sockop")
     err := cmd.Run()
@@ -70,7 +69,7 @@ func main() {
     fmt.Println("Done")
 
     fmt.Print("Loading sockmaps program...")
-    cmd = exec.Command("/opt/sockmap/bpftool", "prog", "load", "/opt/sockmap/sockmap_redir.o", "map", "name", "sock_ops_map", "pinned", "/sys/fs/bpf/sock_ops_map")
+    cmd = exec.Command("/opt/sockmap/bpftool", "prog", "load", "/opt/sockmap/sockmap_redir.o", "/sys/fs/bpf/bpf_redir", "map", "name", "sock_ops_map", "pinned", "/sys/fs/bpf/sock_ops_map")
     err = cmd.Run()
     if err != nil {
         log.Fatal(err)
@@ -84,7 +83,6 @@ func main() {
         log.Fatal(err)
     }
     fmt.Println("Done")
-    */
 
     // TODO: need an API server to load/unload the sockmap program
     for {
