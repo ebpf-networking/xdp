@@ -3,10 +3,10 @@ package main
 import (
     "fmt"
     "os"
-    //"os/exec"
+    "os/exec"
     "io"
     "time"
-    //"log"
+    "log"
 )
 
 func fileCopy(src, dst string) error {
