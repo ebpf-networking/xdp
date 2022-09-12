@@ -4,10 +4,54 @@ import (
     "fmt"
     "os"
     "os/exec"
+    "os/signal"
+    "syscall"
     "io"
     "time"
     "log"
 )
+
+func cleanup() {
+
+    // Unload and detach ebpf program in the reverse order
+    fmt.Print("Detaching sockmap program...")
+    cmd := exec.Command("/opt/sockmap/bpftool", "prog", "detach", "pinned", "/sys/fs/bpf/bpf_redir", "msg_verdict", "pinned", "/sys/fs/bpf/sock_ops_map")
+    err := cmd.Run()
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Done")
+
+    fmt.Print("Deleting sockmap program...")
+    cmd = exec.Command("/bin/rm", "-f", "/sys/fs/bpf/bpf_redir")
+    err = cmd.Run()
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Done")
+
+    fmt.Print("Detaching sockops program...")
+    cmd = exec.Command("/opt/sockmap/bpftool", "cgroup", "detach", "/sys/fs/cgroup/unified", "sock_ops", "pinned", "/sys/fs/bpf/sockop")
+    err = cmd.Run()
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Done")
+
+    fmt.Print("Deleting sockops program...")
+    cmd = exec.Command("/bin/rm", "-f", "/sys/fs/bpf/sockop")
+    err = cmd.Run()
+    if err != nil {
+        log.Fatal(err)
+    }
+    cmd = exec.Command("/bin/rm", "-f", "/sys/fs/bpf/sock_ops_map")
+    err = cmd.Run()
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Done")
+
+}
 
 func fileCopy(src, dst string) error {
     srcFileStat, err := os.Stat(src)
@@ -83,6 +127,14 @@ func main() {
         log.Fatal(err)
     }
     fmt.Println("Done")
+
+    c := make(chan os.Signal)
+    signal.Notify(c, syscall.SIGTERM)
+    go func() {
+        <- c
+        cleanup()
+        os.Exit(0)
+    }()
 
     // TODO: need an API server to load/unload the sockmap program
     for {
