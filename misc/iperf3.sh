@@ -10,6 +10,7 @@ git clone https://github.com/brendangregg/FlameGraph.git
 
 iperf3_runtime=10
 wait_time=$((iperf3_runtime+10))
+buffer_len=128k
 
 function run_server()
 {
@@ -32,7 +33,7 @@ spec:
       containers:
       - name: iperf3-client
         image: networkstatic/iperf3
-        command: ["iperf3", "-c", "$ip", "-t", "$iperf3_runtime", "--forceflush"]
+        command: ["iperf3", "-c", "$ip", "-t", "$iperf3_runtime", "-l", "$buffer_len", "--forceflush"]
       nodeName: $1
       restartPolicy: Never
   backoffLimit: 4
@@ -90,7 +91,7 @@ function cpu_of() {
   pid=$(cat /sys/fs/cgroup/perf_event/kubepods-besteffort-pod${1}.slice:cri-containerd:${2}/cgroup.procs)
   for i in $(seq 0 $iperf3_runtime)
   do
-    ps -p $pid -o %cpu= >> ${output_dir}/${3}_cpu.txt
+    ps -p $pid -o %cpu= >> ${output_dir}/.${3}_cpu.txt
     sleep 1
   done
 }
@@ -116,6 +117,8 @@ client_alt_uid=$(echo -n $client_uid|tr '-' '_')
 perf record -g -a -o server-perf.data -e cycles -G kubepods-besteffort-pod${server_alt_uid}.slice:cri-containerd:${server_containerid} sleep $iperf3_runtime &
 perf record -g -a -o client-perf.data -e cycles -G kubepods-besteffort-pod${client_alt_uid}.slice:cri-containerd:${client_containerid} sleep $iperf3_runtime &
 
+rm -f ${output_dir}/.server_cpu.txt
+rm -f ${output_dir}/.client_cpu.txt
 cpu_of $server_alt_uid $server_containerid "server" &
 cpu_of $client_alt_uid $client_containerid "client" &
 
@@ -124,6 +127,9 @@ kubectl logs pod1 >${output_dir}/client.log
 kubectl logs ${client_pod} >${output_dir}/client.log
 perf script -i server-perf.data | ./FlameGraph/stackcollapse-perf.pl | ./FlameGraph/flamegraph.pl >${output_dir}/server-flamegraph.svg
 perf script -i client-perf.data | ./FlameGraph/stackcollapse-perf.pl | ./FlameGraph/flamegraph.pl >${output_dir}/client-flamegraph.svg
+
+cat ${output_dir}/.server_cpu.txt | sed -e 'H;${x;s/\n/,/g;s/^,//;p;};d' > ${output_dir}/server_cpu.txt
+cat ${output_dir}/.client_cpu.txt | sed -e 'H;${x;s/\n/,/g;s/^,//;p;};d' > ${output_dir}/client_cpu.txt
 
 rm -f server-perf.data
 rm -f client-perf.data
