@@ -15,13 +15,27 @@ buffer_len=128k
 function run_server()
 {
   kubectl run pod1 --image=networkstatic/iperf3 --overrides="{\"spec\": { \"nodeSelector\": {\"kubernetes.io/hostname\": \"$1\"}}}" --command -- iperf3 -s --forceflush
+  kubectl expose pod pod1 --port 5201 --name pod1
 }
 
-function run_client()
+function pod_ip()
 {
   ipq=$(kubectl get pods pod1 -o json|jq ".status.podIP")
   ipq1=${ipq#\"}
   ip=${ipq1%\"}
+  echo "$ip"
+}
+
+function svc_ip()
+{
+  ipq=$(kubectl get service pod1 -o json | jq ".spec.clusterIP")
+  ipq1=${ipq#\"}
+  ip=${ipq1%\"}
+  echo "$ip"
+}
+
+function run_client()
+{
   cat >client-job.yaml <<EOF
 apiVersion: batch/v1
 kind: Job
@@ -33,7 +47,7 @@ spec:
       containers:
       - name: iperf3-client
         image: networkstatic/iperf3
-        command: ["iperf3", "-c", "$ip", "-t", "$iperf3_runtime", "-l", "$buffer_len", "--forceflush"]
+        command: ["iperf3", "-c", "$2", "-t", "$iperf3_runtime", "-l", "$buffer_len", "--forceflush"]
       nodeName: $1
       restartPolicy: Never
   backoffLimit: 4
@@ -44,9 +58,6 @@ EOF
 
 function run_client_v6()
 {
-  ipq=$(kubectl get pods pod1 -o json|jq ".status.podIPs[1].ip")
-  ipq1=${ipq#\"}
-  ip=${ipq1%\"}
   cat >client-job.yaml <<EOF
 apiVersion: batch/v1
 kind: Job
@@ -58,7 +69,7 @@ spec:
       containers:
       - name: iperf3-client
         image: networkstatic/iperf3
-        command: ["iperf3", "-c", "$ip", "-6", "-t", "$iperf3_runtime", "--forceflush"]
+        command: ["iperf3", "-c", "$2", "-6", "-t", "$iperf3_runtime", "--forceflush"]
       nodeName: $1
       restartPolicy: Never
   backoffLimit: 4
@@ -104,8 +115,8 @@ run_server ${server_hostname}
 server_hostip=$(hostip_of pod1)
 server_uid=$(uid_of pod1)
 kubectl wait --for=condition=Ready pod/pod1
-#run_client_v6 ${client_hostname}
-run_client ${client_hostname}
+#run_client_v6 ${client_hostname} $(pod_ip)
+run_client ${client_hostname} $(svc_ip)
 client_hostip=$(hostip_of ${client_pod})
 client_uid=$(uid_of ${client_pod})
 kubectl wait --for=condition=Ready pod/${client_pod}
@@ -134,4 +145,5 @@ cat ${output_dir}/.client_cpu.txt | sed -e 'H;${x;s/\n/,/g;s/^,//;p;};d' > ${out
 rm -f server-perf.data
 rm -f client-perf.data
 kubectl delete pod pod1
+kubectl delete svc pod1
 kubectl delete job iperf3-client
