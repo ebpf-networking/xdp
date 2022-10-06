@@ -134,7 +134,7 @@ cpu_of $server_alt_uid $server_containerid "server" &
 cpu_of $client_alt_uid $client_containerid "client" &
 
 sleep $wait_time
-kubectl logs pod1 >${output_dir}/client.log
+kubectl logs pod1 >${output_dir}/server.log
 kubectl logs ${client_pod} >${output_dir}/client.log
 perf script -i server-perf.data | ./FlameGraph/stackcollapse-perf.pl | ./FlameGraph/flamegraph.pl >${output_dir}/server-flamegraph.svg
 perf script -i client-perf.data | ./FlameGraph/stackcollapse-perf.pl | ./FlameGraph/flamegraph.pl >${output_dir}/client-flamegraph.svg
