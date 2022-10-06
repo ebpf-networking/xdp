@@ -58,7 +58,7 @@ spec:
       containers:
       - name: iperf3-client
         image: networkstatic/iperf3
-        command: ["iperf3", "-c", "$ip", "-t", "$iperf3_runtime", "--forceflush"]
+        command: ["iperf3", "-c", "$ip", "-6", "-t", "$iperf3_runtime", "--forceflush"]
       nodeName: $1
       restartPolicy: Never
   backoffLimit: 4
