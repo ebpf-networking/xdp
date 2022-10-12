@@ -14,6 +14,13 @@ import (
 
 func cleanup() {
 
+    mount, err := cgroup2Mount()
+    if (err == nil) {
+        fmt.Printf("Cgroup2 mount point: %s\n", mount)
+    } else {
+        log.Fatal(err)
+    }
+
     // Unload and detach ebpf program in the reverse order
     fmt.Print("Detaching sockmap program...")
     cmd := exec.Command("/opt/sockmap/bpftool", "prog", "detach", "pinned", "/sys/fs/bpf/bpf_redir", "msg_verdict", "pinned", "/sys/fs/bpf/sock_ops_map")
@@ -32,7 +39,7 @@ func cleanup() {
     fmt.Println("Done")
 
     fmt.Print("Detaching sockops program...")
-    cmd = exec.Command("/opt/sockmap/bpftool", "cgroup", "detach", "/sys/fs/cgroup/unified", "sock_ops", "pinned", "/sys/fs/bpf/sockop")
+    cmd = exec.Command("/opt/sockmap/bpftool", "cgroup", "detach", mount, "sock_ops", "pinned", "/sys/fs/bpf/sockop")
     err = cmd.Run()
     if err != nil {
         log.Fatal(err)
