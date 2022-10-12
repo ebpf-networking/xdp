@@ -24,7 +24,7 @@ func cleanup() {
     // Unload and detach ebpf program in the reverse order
     fmt.Print("Detaching sockmap program...")
     cmd := exec.Command("/opt/sockmap/bpftool", "prog", "detach", "pinned", "/sys/fs/bpf/bpf_redir", "msg_verdict", "pinned", "/sys/fs/bpf/sock_ops_map")
-    err := cmd.Run()
+    err = cmd.Run()
     if err != nil {
         log.Fatal(err)
     }
