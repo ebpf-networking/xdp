@@ -9,6 +9,7 @@ import (
     "io"
     "time"
     "log"
+    "github.com/moby/sys/mountinfo"
 )
 
 func cleanup() {
@@ -84,8 +85,37 @@ func fileCopy(src, dst string) error {
     return err
 }
 
+func cgroup2Filter(info *mountinfo.Info) (bool, bool) {
+    if (info.FSType == "cgroup2") {
+        return false, false
+    }
+    return true, false
+}
+
+func cgroup2Mount() (string, error) {
+    mounts, err := mountinfo.GetMounts(cgroup2Filter)
+    if (err == nil) {
+        if (len(mounts) == 0) {
+            return "", fmt.Errorf("No cgroup2 mount point detected")
+        }
+        if (len(mounts) > 1) {
+            fmt.Println("Multiple cgroup2 mounts detected, using the first one...")
+        }
+        return mounts[0].Mountpoint, nil
+    } else {
+        return "", err
+    }
+}
+
 func main() {
     fmt.Println("Sockmap daemon process has started...")
+
+    mount, err := cgroup2Mount()
+    if (err == nil) {
+        fmt.Printf("Cgroup2 mount point: %s\n", mount)
+    } else {
+        log.Fatal(err)
+    }
 
     fmt.Print("Copying files...")
     // Copy the required files to host machine
@@ -98,7 +128,7 @@ func main() {
     // Load and attach ebpf program
     fmt.Print("Loading sockops program...")
     cmd := exec.Command("/opt/sockmap/bpftool", "prog", "load", "/opt/sockmap/sockops.o", "/sys/fs/bpf/sockop")
-    err := cmd.Run()
+    err = cmd.Run()
     if err != nil {
         log.Fatal(err)
     }
